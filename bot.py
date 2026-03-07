@@ -1,5 +1,6 @@
 """Discord automation bot with SHA256 verification commands."""
 
+import logging
 import os
 
 import discord
@@ -9,6 +10,12 @@ from dotenv import load_dotenv
 from sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -20,7 +27,7 @@ tree = app_commands.CommandTree(client)
 @client.event
 async def on_ready():
     await tree.sync()
-    print(f"Logged in as {client.user} (ID: {client.user.id})")
+    logger.info("Logged in as %s (ID: %s)", client.user, client.user.id)
 
 
 @tree.command(name="sha256", description="Compute the SHA256 hash of the provided text")
