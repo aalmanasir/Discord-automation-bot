@@ -7,7 +7,7 @@ import unittest
 # Allow importing from the project root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
+from backend.utils.sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
 
 
 # ---------------------------------------------------------------------------
