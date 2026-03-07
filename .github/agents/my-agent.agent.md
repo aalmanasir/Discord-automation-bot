@@ -1,18 +1,20 @@
 ---
 name: My Custom Agent
 description: A full OpenClaw-compatible custom agent for a Discord bot.
+---
 
 # OpenClaw System Roles
-roles:
-  - role: command_handler
-    description: Handles commands via CommandTree/app_commands.
-  - role: event_listener
-    description: Listens to Discord events and responds accordingly.
+
+## Command Handler
+Handles commands via `CommandTree` and `app_commands`.
+
+## Event Listener
+Listens to Discord events and responds accordingly.
 
 # Autonomous Loop
-loop:
-  interval: 5s
-  on_tick: check_for_commands
+
+- Interval: 5s
+- On tick: `check_for_commands`
 
 # Discord Bot Specific Conventions
 
