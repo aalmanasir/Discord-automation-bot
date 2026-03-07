@@ -5,11 +5,14 @@ import os
 
 import discord
 from discord import app_commands
-from dotenv import load_dotenv
 
-from sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
-
-load_dotenv()
+from backend.config.settings import get_discord_token
+from backend.services.sha256_service import (
+    hash_bytes,
+    hash_text,
+    verify_bytes_hash,
+    verify_text_hash,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,7 +37,7 @@ async def on_ready():
 @app_commands.describe(text="The text to hash")
 async def sha256_command(interaction: discord.Interaction, text: str):
     """Return the SHA256 hex-digest of *text*."""
-    digest = compute_sha256_text(text)
+    digest = hash_text(text)
     await interaction.response.send_message(
         f"**SHA256** of your text:\n```\n{digest}\n```",
         ephemeral=True,
@@ -53,8 +56,7 @@ async def sha256_verify_command(
     interaction: discord.Interaction, text: str, expected_hash: str
 ):
     """Compare the SHA256 of *text* against *expected_hash*."""
-    digest = compute_sha256_text(text)
-    match = verify_sha256(digest, expected_hash)
+    digest, match = verify_text_hash(text, expected_hash)
     if match:
         await interaction.response.send_message(
             f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```",
@@ -84,10 +86,9 @@ async def sha256_file_command(
     """Compute the SHA256 of *file* and optionally verify it against *expected_hash*."""
     await interaction.response.defer(ephemeral=True)
     data = await file.read()
-    digest = compute_sha256_bytes(data)
 
     if expected_hash:
-        match = verify_sha256(digest, expected_hash)
+        digest, match = verify_bytes_hash(data, expected_hash)
         if match:
             await interaction.followup.send(
                 f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
@@ -100,6 +101,7 @@ async def sha256_file_command(
                 ephemeral=True,
             )
     else:
+        digest = hash_bytes(data)
         await interaction.followup.send(
             f"**SHA256** of `{file.filename}`:\n```\n{digest}\n```",
             ephemeral=True,
@@ -107,12 +109,9 @@ async def sha256_file_command(
 
 
 def main():
-    if not DISCORD_TOKEN:
-        raise RuntimeError(
-            "DISCORD_TOKEN environment variable is not set. "
-            "Copy .env.example to .env and fill in your bot token."
-        )
-    client.run(DISCORD_TOKEN)
+    token = get_discord_token()
+    logger.info("Starting Discord bot…")
+    client.run(token)
 
 
 if __name__ == "__main__":
