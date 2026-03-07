@@ -1,18 +1,10 @@
-"""SHA256 helper utilities shared by the bot commands and tests."""
+"""SHA256 helper utilities — re-exported from backend.utils for compatibility.
 
-import hashlib
+New code should import directly from ``backend.utils.sha256_helpers``.
+"""
 
-
-def compute_sha256_text(text: str) -> str:
-    """Return the SHA256 hex-digest of *text* encoded as UTF-8."""
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def compute_sha256_bytes(data: bytes) -> str:
-    """Return the SHA256 hex-digest of raw *data*."""
-    return hashlib.sha256(data).hexdigest()
-
-
-def verify_sha256(digest: str, expected: str) -> bool:
-    """Return True when *digest* equals *expected* (case-insensitive, stripped)."""
-    return digest == expected.strip().lower()
+from backend.utils.sha256_helpers import (  # noqa: F401
+    compute_sha256_bytes,
+    compute_sha256_text,
+    verify_sha256,
+)
