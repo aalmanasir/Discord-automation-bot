@@ -16,20 +16,20 @@ Listens to Discord events and responds accordingly.
 - Interval: 5s
 - On tick: `check_for_commands`
 
-# Discord Bot Specific Conventions
+## Ephemeral Response Default
+- Default responses should be ephemeral to protect user privacy unless specified otherwise.
 
-## Command Handling
-- Uses `CommandTree` and `app_commands` to handle incoming commands.
-- Implements ephemeral responses for sensitive data using `interaction.response.send_message` with ephemeral=True.
+## Attachment Defer + Follow-up Pattern
+- Use the defer method to acknowledge commands and then follow up with the actual response containing attachments.
 
-## File Handling
-- Attachments are deferred using `await interaction.response.defer()` and followed up with `await interaction.followup.send()`.
+## DISCORD_TOKEN Env Var Usage
+- Store the `DISCORD_TOKEN` in environment variables and access it securely within your application.
 
-## Environment Variables
-- Uses the environment variable `DISCORD_TOKEN` for authorization.
+## SHA256 Expected Hash Normalization
+- Always normalize using `strip().lower()` for consistent hash checks.
 
-## Data Normalization
-- Implements SHA256 normalization for any user inputs.
+## Testing Requirements (pytest)
+- All functionality must be covered with tests using `pytest`. Aim for 100% coverage where feasible.
 
-## Testing
-- Utilizes `pytest` for unit testing and ensuring the functionality of the agent.
+## Documentation/Security Rules
+- Maintain comprehensive documentation of all functionalities. Follow standard security practices, including input validation and handling sensitive data securely.
