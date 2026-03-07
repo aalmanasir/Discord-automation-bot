@@ -1,4 +1,4 @@
-"""Discord automation bot with SHA256 verification commands."""
+"""Discord automation bot with SHA256 verification commands and OpenClaw git push."""
 
 import os
 
@@ -6,11 +6,13 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 
+from git_helpers import GitError, git_push
 from sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
 
 load_dotenv()
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+OPENCLAW_REPO_PATH = os.getenv("OPENCLAW_REPO_PATH", ".")
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -95,6 +97,50 @@ async def sha256_file_command(
     else:
         await interaction.followup.send(
             f"**SHA256** of `{file.filename}`:\n```\n{digest}\n```",
+            ephemeral=True,
+        )
+
+
+@tree.command(
+    name="openclaw",
+    description="Push the configured repository using SSH / system credential manager",
+)
+@app_commands.describe(
+    remote="Remote name or URL to push to (default: origin)",
+    branch="Branch to push (default: current branch)",
+)
+async def openclaw_command(
+    interaction: discord.Interaction,
+    remote: str = "origin",
+    branch: str = "",
+):
+    """Push OPENCLAW_REPO_PATH to *remote* using SSH / the system credential manager.
+
+    Credentials are sourced entirely from the host environment (SSH keys or
+    the system credential manager).  No PAT is ever requested through chat.
+    """
+    await interaction.response.defer(ephemeral=True)
+    try:
+        output = git_push(OPENCLAW_REPO_PATH, remote, branch or None)
+        msg = f"✅ **Pushed** `{OPENCLAW_REPO_PATH}` → `{remote}`"
+        if branch:
+            msg += f" (branch: `{branch}`)"
+        if output:
+            msg += f"\n```\n{output}\n```"
+        await interaction.followup.send(msg, ephemeral=True)
+    except ValueError as exc:
+        await interaction.followup.send(
+            f"❌ **Invalid input:**\n```\n{exc}\n```",
+            ephemeral=True,
+        )
+    except TimeoutError as exc:
+        await interaction.followup.send(
+            f"⏱️ **Timed out:**\n```\n{exc}\n```",
+            ephemeral=True,
+        )
+    except GitError as exc:
+        await interaction.followup.send(
+            f"❌ **Push failed:**\n```\n{exc}\n```",
             ephemeral=True,
         )
 
