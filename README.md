@@ -1,6 +1,6 @@
 # Discord-automation-bot
 
-A Discord bot with SHA256 verification commands.
+A production-grade Discord bot with SHA256 verification commands.
 
 ## Features
 
@@ -12,11 +12,38 @@ A Discord bot with SHA256 verification commands.
 
 All responses are ephemeral (only visible to the invoking user).
 
+## Project structure
+
+```
+Discord-automation-bot/
+├── bot.py                  # Entry-point — starts the Discord client
+├── sha256_helpers.py       # Backward-compatible re-export shim
+├── requirements.txt
+├── requirements-dev.txt
+├── .env.example
+├── Dockerfile
+│
+├── backend/
+│   ├── config/
+│   │   └── settings.py     # Environment-variable configuration
+│   ├── utils/
+│   │   └── sha256_helpers.py  # Core SHA256 primitives
+│   └── services/
+│       └── sha256_service.py  # Business-logic service layer
+│
+├── scripts/
+│   └── run_bot.sh          # Local dev launcher
+│
+└── tests/
+    ├── test_sha256.py             # Unit tests for sha256 utilities
+    └── test_sha256_service.py     # Unit tests for the service layer
+```
+
 ## Setup
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - A Discord application and bot token ([Discord Developer Portal](https://discord.com/developers/applications))
 
 ### Installation
@@ -35,6 +62,18 @@ cp .env.example .env
 
 # Run the bot
 python bot.py
+# — or use the helper script —
+bash scripts/run_bot.sh
+```
+
+### Docker
+
+```bash
+# Build the image
+docker build -t discord-automation-bot .
+
+# Run the container
+docker run --env-file .env discord-automation-bot
 ```
 
 ### Required bot permissions
