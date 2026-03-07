@@ -1,28 +1,33 @@
-# OpenClaw Agent
-
-## Conventions
-
-1. **discord.py CommandTree/app_commands**: Use `CommandTree` for organizing commands within the discord.py framework.
-
-2. **Ephemeral Responses**: Ensure to utilize ephemeral responses where appropriate for user privacy and clarity.
-
-3. **Attachment Deferral/Follow-up Pattern**: Implement a follow-up behavior for message attachments, ensuring users receive notifications about their file uploads.
-
-4. **DISCORD_TOKEN Environment Variable**: Use the `DISCORD_TOKEN` environment variable for authentication purposes instead of hardcoding sensitive information in the code.
-
-5. **Normalization Rules for Expected Hash**: To maintain consistency, follow normalization rules when comparing expected hash values.
-
-6. **Testing with pytest**: All agents should have associated tests. While `pytest` is recommended, `unittest` is also acceptable.
-
 ---
+name: My Custom Agent
+description: A full OpenClaw-compatible custom agent for a Discord bot.
 
-## OpenClaw Cooperation Sections
+# OpenClaw System Roles
+roles:
+  - role: command_handler
+    description: Handles commands via CommandTree/app_commands.
+  - role: event_listener
+    description: Listens to Discord events and responds accordingly.
 
-Here we will outline how the OpenClaw framework collaborates with existing agents and provide guidelines for interaction protocols. Be sure to maintain clear communication channels with the OpenClaw team.
+# Autonomous Loop
+loop:
+  interval: 5s
+  on_tick: check_for_commands
 
-### Key Cooperation Protocols
+# Discord Bot Specific Conventions
 
-- Regular updates on agent performance.
-- Need to adhere to any established communication standards for collaborating with OpenClaw agents.
+## Command Handling
+- Uses `CommandTree` and `app_commands` to handle incoming commands.
+- Implements ephemeral responses for sensitive data using `interaction.response.send_message` with ephemeral=True.
 
----
+## File Handling
+- Attachments are deferred using `await interaction.response.defer()` and followed up with `await interaction.followup.send()`.
+
+## Environment Variables
+- Uses the environment variable `DISCORD_TOKEN` for authorization.
+
+## Data Normalization
+- Implements SHA256 normalization for any user inputs.
+
+## Testing
+- Utilizes `pytest` for unit testing and ensuring the functionality of the agent.
