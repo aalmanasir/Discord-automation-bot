@@ -1,5 +1,6 @@
 """Discord automation bot with SHA256 verification commands."""
 
+import asyncio
 import logging
 
 import discord
@@ -9,6 +10,7 @@ from backend.config.settings import get_discord_token
 from backend.services.sha256_service import (
     hash_bytes,
     hash_text,
+    normalize_hash,
     verify_bytes_hash,
     verify_text_hash,
 )
@@ -23,10 +25,17 @@ intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+# Guard to prevent redundant global slash-command syncs when the bot
+# reconnects to Discord after a network interruption.
+_synced = False
+
 
 @client.event
 async def on_ready():
-    await tree.sync()
+    global _synced
+    if not _synced:
+        await tree.sync()
+        _synced = True
     logger.info("Logged in as %s (ID: %s)", client.user, client.user.id)
 
 
@@ -60,9 +69,8 @@ async def sha256_verify_command(
             ephemeral=True,
         )
     else:
-        normalized_expected = expected_hash.strip().lower()
         await interaction.response.send_message(
-            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
+            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
             ephemeral=True,
         )
 
@@ -85,20 +93,23 @@ async def sha256_file_command(
     data = await file.read()
 
     if expected_hash:
-        digest, match = verify_bytes_hash(data, expected_hash)
+        # Run the CPU-bound hash in a thread pool so the event loop stays
+        # responsive to other Discord events while large files are processed.
+        digest, match = await asyncio.to_thread(verify_bytes_hash, data, expected_hash)
         if match:
             await interaction.followup.send(
                 f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
                 ephemeral=True,
             )
         else:
-            normalized_expected = expected_hash.strip().lower()
             await interaction.followup.send(
-                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
+                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
                 ephemeral=True,
             )
     else:
-        digest = hash_bytes(data)
+        # Run the CPU-bound hash in a thread pool so the event loop stays
+        # responsive to other Discord events while large files are processed.
+        digest = await asyncio.to_thread(hash_bytes, data)
         await interaction.followup.send(
             f"**SHA256** of `{file.filename}`:\n```\n{digest}\n```",
             ephemeral=True,
