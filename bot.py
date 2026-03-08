@@ -1,6 +1,7 @@
 """Discord automation bot with SHA256 verification commands."""
 
 import logging
+import os
 
 import discord
 from discord import app_commands
@@ -15,9 +16,11 @@ from backend.services.sha256_service import (
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
