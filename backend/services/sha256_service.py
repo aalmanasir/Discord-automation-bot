@@ -39,6 +39,28 @@ def hash_bytes(data: bytes) -> str:
     return digest
 
 
+def _verify_and_log(digest: str, expected_hash: str, source: str) -> tuple[str, bool]:
+    """Verify *digest* against *expected_hash* and log the result.
+
+    Args:
+        digest: The already-computed SHA256 hex-digest.
+        expected_hash: The expected SHA256 hex-digest.
+        source: A label used in the log message (e.g. ``"text"`` or ``"bytes"``).
+
+    Returns:
+        A tuple of (digest, match) where *match* is True when the digests
+        are equal (case-insensitive, whitespace-stripped).
+    """
+    match = verify_sha256(digest, expected_hash)
+    logger.debug(
+        "SHA256 %s verification: match=%s, expected=%s",
+        source,
+        match,
+        expected_hash.strip()[:16] + "…",
+    )
+    return digest, match
+
+
 def verify_text_hash(text: str, expected_hash: str) -> tuple[str, bool]:
     """Hash *text* and compare against *expected_hash*.
 
@@ -50,14 +72,7 @@ def verify_text_hash(text: str, expected_hash: str) -> tuple[str, bool]:
         A tuple of (computed_digest, match) where *match* is True when they
         are equal (case-insensitive, whitespace-stripped).
     """
-    digest = compute_sha256_text(text)
-    match = verify_sha256(digest, expected_hash)
-    logger.debug(
-        "SHA256 text verification: match=%s, expected=%s",
-        match,
-        expected_hash.strip()[:16] + "…",
-    )
-    return digest, match
+    return _verify_and_log(compute_sha256_text(text), expected_hash, "text")
 
 
 def verify_bytes_hash(data: bytes, expected_hash: str) -> tuple[str, bool]:
@@ -71,11 +86,4 @@ def verify_bytes_hash(data: bytes, expected_hash: str) -> tuple[str, bool]:
         A tuple of (computed_digest, match) where *match* is True when they
         are equal (case-insensitive, whitespace-stripped).
     """
-    digest = compute_sha256_bytes(data)
-    match = verify_sha256(digest, expected_hash)
-    logger.debug(
-        "SHA256 bytes verification: match=%s, expected=%s",
-        match,
-        expected_hash.strip()[:16] + "…",
-    )
-    return digest, match
+    return _verify_and_log(compute_sha256_bytes(data), expected_hash, "bytes")
