@@ -1,20 +1,20 @@
 ---
 name: My Custom Agent
-description: This agent serves various functions ranging from automation to communication using Discord.
+description: A full OpenClaw-compatible custom agent for a Discord bot.
 ---
 
-## OpenClaw Responsibilities vs Copilot Responsibilities
-- **OpenClaw**: Focuses on integration and communication.
-- **Copilot**: Handles code generation and logical implementations.
+# OpenClaw System Roles
 
-## Autonomous Development Loop
-- Continuous improvements based on feedback and testing results.
+## Command Handler
+Handles commands via `CommandTree` and `app_commands`.
 
-## Code Generation Policy
-- Code must be clear, maintainable, and follow best practices. Automated tests should accompany all generated code.
+## Event Listener
+Listens to Discord events and responds accordingly.
 
-## discord.py CommandTree/app_commands Conventions
-- Use `CommandTree` for defining commands. Ensure to follow the standard patterns for slash commands.
+# Autonomous Loop
+
+- Interval: 5s
+- On tick: `check_for_commands`
 
 ## Ephemeral Response Default
 - Default responses should be ephemeral to protect user privacy unless specified otherwise.
