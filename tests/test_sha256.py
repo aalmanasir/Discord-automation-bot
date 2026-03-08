@@ -7,12 +7,36 @@ import unittest
 # Allow importing from the project root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from backend.utils.sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
+from backend.utils.sha256_helpers import compute_sha256_bytes, compute_sha256_text, normalize_hash, verify_sha256
 
 
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
+
+class TestNormalizeHash(unittest.TestCase):
+    """Tests for normalize_hash."""
+
+    def test_strips_leading_whitespace(self):
+        self.assertEqual(normalize_hash("  abc"), "abc")
+
+    def test_strips_trailing_whitespace(self):
+        self.assertEqual(normalize_hash("abc  "), "abc")
+
+    def test_lowercases(self):
+        self.assertEqual(normalize_hash("ABC123"), "abc123")
+
+    def test_strips_and_lowercases(self):
+        digest = compute_sha256_text("hello").upper()
+        self.assertEqual(normalize_hash("  " + digest + "  "), digest.lower())
+
+    def test_empty_string(self):
+        self.assertEqual(normalize_hash(""), "")
+
+    def test_already_normalized(self):
+        digest = compute_sha256_text("hello")
+        self.assertEqual(normalize_hash(digest), digest)
 
 
 class TestComputeSha256Text(unittest.TestCase):
