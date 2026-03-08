@@ -15,4 +15,4 @@ def compute_sha256_bytes(data: bytes) -> str:
 
 def verify_sha256(digest: str, expected: str) -> bool:
     """Return True when *digest* equals *expected* (case-insensitive, stripped)."""
-    return digest == expected.strip().lower()
+    return digest.strip().lower() == expected.strip().lower()
