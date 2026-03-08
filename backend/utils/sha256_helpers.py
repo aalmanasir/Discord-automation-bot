@@ -13,6 +13,6 @@ def compute_sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def verify_sha256(digest: str, expected: str) -> bool:
-    """Return True when *digest* equals *expected* (case-insensitive, stripped)."""
-    return digest == expected.strip().lower()
+def verify_sha256(digest: str, expected_hash: str) -> bool:
+    """Return True when *digest* equals *expected_hash* (case-insensitive, stripped)."""
+    return digest == expected_hash.strip().lower()

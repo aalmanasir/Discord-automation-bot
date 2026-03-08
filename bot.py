@@ -21,16 +21,16 @@ logger = logging.getLogger(__name__)
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
+command_tree = app_commands.CommandTree(client)
 
 
 @client.event
 async def on_ready():
-    await tree.sync()
+    await command_tree.sync()
     logger.info("Logged in as %s (ID: %s)", client.user, client.user.id)
 
 
-@tree.command(name="sha256", description="Compute the SHA256 hash of the provided text")
+@command_tree.command(name="sha256", description="Compute the SHA256 hash of the provided text")
 @app_commands.describe(text="The text to hash")
 async def sha256_command(interaction: discord.Interaction, text: str):
     """Return the SHA256 hex-digest of *text*."""
@@ -41,7 +41,7 @@ async def sha256_command(interaction: discord.Interaction, text: str):
     )
 
 
-@tree.command(
+@command_tree.command(
     name="sha256_verify",
     description="Verify whether the SHA256 hash of the provided text matches a given hash",
 )
@@ -67,7 +67,7 @@ async def sha256_verify_command(
         )
 
 
-@tree.command(
+@command_tree.command(
     name="sha256_file",
     description="Compute or verify the SHA256 hash of an uploaded file",
 )
@@ -82,10 +82,10 @@ async def sha256_file_command(
 ):
     """Compute the SHA256 of *file* and optionally verify it against *expected_hash*."""
     await interaction.response.defer(ephemeral=True)
-    data = await file.read()
+    file_bytes = await file.read()
 
     if expected_hash:
-        digest, match = verify_bytes_hash(data, expected_hash)
+        digest, match = verify_bytes_hash(file_bytes, expected_hash)
         if match:
             await interaction.followup.send(
                 f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
@@ -98,7 +98,7 @@ async def sha256_file_command(
                 ephemeral=True,
             )
     else:
-        digest = hash_bytes(data)
+        digest = hash_bytes(file_bytes)
         await interaction.followup.send(
             f"**SHA256** of `{file.filename}`:\n```\n{digest}\n```",
             ephemeral=True,
@@ -106,9 +106,9 @@ async def sha256_file_command(
 
 
 def main():
-    token = get_discord_token()
+    discord_bot_token = get_discord_token()
     logger.info("Starting Discord bot…")
-    client.run(token)
+    client.run(discord_bot_token)
 
 
 if __name__ == "__main__":

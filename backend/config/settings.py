@@ -13,10 +13,10 @@ def get_discord_token() -> str:
     Raises:
         RuntimeError: If DISCORD_TOKEN is not set.
     """
-    token = os.getenv("DISCORD_TOKEN", "")
-    if not token:
+    discord_bot_token = os.getenv("DISCORD_TOKEN", "")
+    if not discord_bot_token:
         raise RuntimeError(
             "DISCORD_TOKEN environment variable is not set. "
             "Copy .env.example to .env and fill in your bot token."
         )
-    return token
+    return discord_bot_token
