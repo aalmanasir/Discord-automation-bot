@@ -6,7 +6,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application source
-COPY . .
+# Copy only the application entrypoint to avoid copying unintended local files
+COPY bot.py .
 
 CMD ["python", "bot.py"]
