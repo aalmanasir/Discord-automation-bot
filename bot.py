@@ -24,6 +24,36 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 
+def _format_verify_result(
+    digest: str,
+    expected_hash: str,
+    match: bool,
+    filename: str | None = None,
+) -> str:
+    """Return a Discord message string for a hash-verification result.
+
+    Args:
+        digest: The computed SHA256 hex-digest.
+        expected_hash: The expected SHA256 hex-digest supplied by the user.
+        match: Whether *digest* and *expected_hash* matched.
+        filename: Optional name of the file that was hashed.
+
+    Returns:
+        A formatted string ready to send as a Discord message.
+    """
+    normalized = expected_hash.strip().lower()
+    if filename:
+        if match:
+            return f"✅ **Match!** SHA256 of `{filename}` matches the expected hash.\n```\n{digest}\n```"
+        return (
+            f"❌ **Mismatch!** SHA256 of `{filename}`:\n"
+            f"Computed: `{digest}`\nExpected: `{normalized}`"
+        )
+    if match:
+        return f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```"
+    return f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalized}`"
+
+
 @client.event
 async def on_ready():
     await tree.sync()
@@ -54,17 +84,10 @@ async def sha256_verify_command(
 ):
     """Compare the SHA256 of *text* against *expected_hash*."""
     digest, match = verify_text_hash(text, expected_hash)
-    if match:
-        await interaction.response.send_message(
-            f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```",
-            ephemeral=True,
-        )
-    else:
-        normalized_expected = expected_hash.strip().lower()
-        await interaction.response.send_message(
-            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
-            ephemeral=True,
-        )
+    await interaction.response.send_message(
+        _format_verify_result(digest, expected_hash, match),
+        ephemeral=True,
+    )
 
 
 @tree.command(
@@ -86,17 +109,10 @@ async def sha256_file_command(
 
     if expected_hash:
         digest, match = verify_bytes_hash(data, expected_hash)
-        if match:
-            await interaction.followup.send(
-                f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
-                ephemeral=True,
-            )
-        else:
-            normalized_expected = expected_hash.strip().lower()
-            await interaction.followup.send(
-                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
-                ephemeral=True,
-            )
+        await interaction.followup.send(
+            _format_verify_result(digest, expected_hash, match, filename=file.filename),
+            ephemeral=True,
+        )
     else:
         digest = hash_bytes(data)
         await interaction.followup.send(
