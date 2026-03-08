@@ -12,6 +12,7 @@ from backend.services.sha256_service import (
     verify_bytes_hash,
     verify_text_hash,
 )
+from backend.utils.response_helpers import build_mismatch_message
 
 logging.basicConfig(
     level=logging.INFO,
@@ -53,16 +54,16 @@ async def sha256_verify_command(
     interaction: discord.Interaction, text: str, expected_hash: str
 ):
     """Compare the SHA256 of *text* against *expected_hash*."""
-    digest, match = verify_text_hash(text, expected_hash)
+    normalized_expected = expected_hash.strip().lower()
+    digest, match = verify_text_hash(text, normalized_expected)
     if match:
         await interaction.response.send_message(
             f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```",
             ephemeral=True,
         )
     else:
-        normalized_expected = expected_hash.strip().lower()
         await interaction.response.send_message(
-            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
+            build_mismatch_message(digest, normalized_expected),
             ephemeral=True,
         )
 
@@ -85,16 +86,16 @@ async def sha256_file_command(
     data = await file.read()
 
     if expected_hash:
-        digest, match = verify_bytes_hash(data, expected_hash)
+        normalized_expected = expected_hash.strip().lower()
+        digest, match = verify_bytes_hash(data, normalized_expected)
         if match:
             await interaction.followup.send(
                 f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
                 ephemeral=True,
             )
         else:
-            normalized_expected = expected_hash.strip().lower()
             await interaction.followup.send(
-                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
+                build_mismatch_message(digest, normalized_expected, file.filename),
                 ephemeral=True,
             )
     else:

@@ -10,6 +10,8 @@ from backend.utils.sha256_helpers import (
 
 logger = logging.getLogger(__name__)
 
+_DEBUG = logging.DEBUG
+
 
 def hash_text(text: str) -> str:
     """Compute and return the SHA256 hex-digest of *text*.
@@ -21,7 +23,8 @@ def hash_text(text: str) -> str:
         A 64-character lowercase hex string.
     """
     digest = compute_sha256_text(text)
-    logger.debug("Computed SHA256 for text input (length=%d)", len(text))
+    if logger.isEnabledFor(_DEBUG):
+        logger.debug("Computed SHA256 for text input (length=%d)", len(text))
     return digest
 
 
@@ -35,7 +38,8 @@ def hash_bytes(data: bytes) -> str:
         A 64-character lowercase hex string.
     """
     digest = compute_sha256_bytes(data)
-    logger.debug("Computed SHA256 for bytes input (length=%d)", len(data))
+    if logger.isEnabledFor(_DEBUG):
+        logger.debug("Computed SHA256 for bytes input (length=%d)", len(data))
     return digest
 
 
@@ -52,11 +56,12 @@ def verify_text_hash(text: str, expected_hash: str) -> tuple[str, bool]:
     """
     digest = compute_sha256_text(text)
     match = verify_sha256(digest, expected_hash)
-    logger.debug(
-        "SHA256 text verification: match=%s, expected=%s",
-        match,
-        expected_hash.strip()[:16] + "…",
-    )
+    if logger.isEnabledFor(_DEBUG):
+        logger.debug(
+            "SHA256 text verification: match=%s, expected=%s",
+            match,
+            expected_hash.strip()[:16] + "…",
+        )
     return digest, match
 
 
@@ -73,9 +78,10 @@ def verify_bytes_hash(data: bytes, expected_hash: str) -> tuple[str, bool]:
     """
     digest = compute_sha256_bytes(data)
     match = verify_sha256(digest, expected_hash)
-    logger.debug(
-        "SHA256 bytes verification: match=%s, expected=%s",
-        match,
-        expected_hash.strip()[:16] + "…",
-    )
+    if logger.isEnabledFor(_DEBUG):
+        logger.debug(
+            "SHA256 bytes verification: match=%s, expected=%s",
+            match,
+            expected_hash.strip()[:16] + "…",
+        )
     return digest, match
