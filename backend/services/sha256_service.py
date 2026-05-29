@@ -5,8 +5,18 @@ import logging
 from backend.utils.sha256_helpers import (
     compute_sha256_bytes,
     compute_sha256_text,
+    normalize_hash,
     verify_sha256,
 )
+
+# Re-export normalize_hash so callers can import it from the service layer.
+__all__ = [
+    "hash_text",
+    "hash_bytes",
+    "normalize_hash",
+    "verify_text_hash",
+    "verify_bytes_hash",
+]
 
 logger = logging.getLogger(__name__)
 
