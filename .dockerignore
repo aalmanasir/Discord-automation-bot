@@ -1,0 +1,32 @@
+# Version control
+.git
+.github
+
+# Python byte-code and caches
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets — never bake credentials into the image
+.env
+
+# Development dependencies are not needed at runtime
+requirements-dev.txt
+tests/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Editor and OS noise
+.DS_Store
+*.swp
