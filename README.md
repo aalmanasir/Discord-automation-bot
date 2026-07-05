@@ -1,5 +1,9 @@
 # Discord-automation-bot
 
+<<<<<<< HEAD
+=======
+A Discord bot with SHA256 verification commands and the OpenClaw git-push command.
+>>>>>>> origin/main
 A production-grade Discord bot with SHA256 verification commands.
 
 ## Features
@@ -9,9 +13,31 @@ A production-grade Discord bot with SHA256 verification commands.
 | `/sha256 <text>` | Compute the SHA256 hash of any text |
 | `/sha256_verify <text> <expected_hash>` | Verify that the SHA256 hash of text matches an expected value |
 | `/sha256_file <file> [expected_hash]` | Compute (or verify) the SHA256 hash of an uploaded file |
+| `/openclaw [remote] [branch]` | Push the configured repository using SSH / system credential manager |
 
 All responses are ephemeral (only visible to the invoking user).
 
+<<<<<<< HEAD
+=======
+## OpenClaw
+
+The `/openclaw` command pushes the local repository configured by the
+`OPENCLAW_REPO_PATH` environment variable.
+
+* **Uses your local SSH / credential manager** — authentication is handled
+  entirely by the host environment (SSH keys, `~/.netrc`, the system
+  credential manager, etc.).
+* **Pushes directly** — runs `git push` via subprocess; no intermediate layer.
+* **Never asks for a PAT in chat** — no token or password parameter exists on
+  the command; credentials cannot be leaked through Discord messages.
+
+### Parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| `remote` | `origin` | Remote name or URL to push to |
+| `branch` | *(current branch)* | Branch ref to push |
+>>>>>>> origin/main
 ## Project structure
 
 ```
@@ -93,3 +119,4 @@ python -m pytest tests/ -v
 | Variable | Description |
 |---|---|
 | `DISCORD_TOKEN` | Your Discord bot token (required) |
+| `OPENCLAW_REPO_PATH` | Absolute path to the repository `/openclaw` will push (default: `.`) |

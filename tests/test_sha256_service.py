@@ -93,10 +93,14 @@ class TestVerifyBytesHash(unittest.TestCase):
         _, match = verify_bytes_hash(data, digest.upper())
         self.assertTrue(match)
 
+<<<<<<< HEAD
     def test_strips_whitespace(self):
         data = b"hello"
         digest = hash_bytes(data)
         _, match = verify_bytes_hash(data, "  " + digest + "  ")
         self.assertTrue(match)
+=======
+
+>>>>>>> origin/main
 if __name__ == "__main__":
     unittest.main()

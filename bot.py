@@ -1,14 +1,28 @@
-"""Discord automation bot with SHA256 verification commands."""
+"""Discord automation bot with SHA256 verification commands and OpenClaw git push."""
 
+<<<<<<< HEAD
 import logging
+=======
+import asyncio
+import logging
+import os
+>>>>>>> origin/main
 
 import discord
 from discord import app_commands
 
+<<<<<<< HEAD
+=======
+<<<<<<< copilot/add-openclaw-integration
+from git_helpers import GitError, git_push
+from sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
+=======
+>>>>>>> origin/main
 from backend.config.settings import get_discord_token
 from backend.services.sha256_service import (
     hash_bytes,
     hash_text,
+<<<<<<< HEAD
     verify_bytes_hash,
     verify_text_hash,
 )
@@ -18,15 +32,72 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+=======
+    normalize_hash,
+    verify_bytes_hash,
+    verify_text_hash,
+)
+>>>>>>> main
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+OPENCLAW_REPO_PATH = os.getenv("OPENCLAW_REPO_PATH", ".")
+>>>>>>> origin/main
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+# Guard to prevent redundant global slash-command syncs when the bot
+# reconnects to Discord after a network interruption.
+_synced = False
+
+
+def _format_verify_result(
+    digest: str,
+    expected_hash: str,
+    match: bool,
+    filename: str | None = None,
+) -> str:
+    """Return a Discord message string for a hash-verification result.
+
+    Args:
+        digest: The computed SHA256 hex-digest.
+        expected_hash: The expected SHA256 hex-digest supplied by the user.
+        match: Whether *digest* and *expected_hash* matched.
+        filename: Optional name of the file that was hashed.
+
+    Returns:
+        A formatted string ready to send as a Discord message.
+    """
+    normalized = expected_hash.strip().lower()
+    if filename:
+        if match:
+            return f"✅ **Match!** SHA256 of `{filename}` matches the expected hash.\n```\n{digest}\n```"
+        return (
+            f"❌ **Mismatch!** SHA256 of `{filename}`:\n"
+            f"Computed: `{digest}`\nExpected: `{normalized}`"
+        )
+    if match:
+        return f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```"
+    return f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalized}`"
+
 
 @client.event
 async def on_ready():
+<<<<<<< HEAD
     await tree.sync()
+=======
+    global _synced
+    if not _synced:
+        await tree.sync()
+        _synced = True
+>>>>>>> origin/main
     logger.info("Logged in as %s (ID: %s)", client.user, client.user.id)
 
 
@@ -54,15 +125,21 @@ async def sha256_verify_command(
 ):
     """Compare the SHA256 of *text* against *expected_hash*."""
     digest, match = verify_text_hash(text, expected_hash)
+<<<<<<< HEAD
+=======
+    await interaction.response.send_message(
+        _format_verify_result(digest, expected_hash, match),
+        ephemeral=True,
+    )
+>>>>>>> origin/main
     if match:
         await interaction.response.send_message(
             f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```",
             ephemeral=True,
         )
     else:
-        normalized_expected = expected_hash.strip().lower()
         await interaction.response.send_message(
-            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
+            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
             ephemeral=True,
         )
 
@@ -86,25 +163,87 @@ async def sha256_file_command(
 
     if expected_hash:
         digest, match = verify_bytes_hash(data, expected_hash)
+<<<<<<< HEAD
+=======
+        await interaction.followup.send(
+            _format_verify_result(digest, expected_hash, match, filename=file.filename),
+            ephemeral=True,
+        )
+        # Run the CPU-bound hash in a thread pool so the event loop stays
+        # responsive to other Discord events while large files are processed.
+        digest, match = await asyncio.to_thread(verify_bytes_hash, data, expected_hash)
+>>>>>>> origin/main
         if match:
             await interaction.followup.send(
                 f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
                 ephemeral=True,
             )
         else:
-            normalized_expected = expected_hash.strip().lower()
             await interaction.followup.send(
-                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalized_expected}`",
+                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
                 ephemeral=True,
             )
     else:
+<<<<<<< HEAD
         digest = hash_bytes(data)
+=======
+        # Run the CPU-bound hash in a thread pool so the event loop stays
+        # responsive to other Discord events while large files are processed.
+        digest = await asyncio.to_thread(hash_bytes, data)
+>>>>>>> origin/main
         await interaction.followup.send(
             f"**SHA256** of `{file.filename}`:\n```\n{digest}\n```",
             ephemeral=True,
         )
 
 
+<<<<<<< HEAD
+=======
+@tree.command(
+    name="openclaw",
+    description="Push the configured repository using SSH / system credential manager",
+)
+@app_commands.describe(
+    remote="Remote name or URL to push to (default: origin)",
+    branch="Branch to push (default: current branch)",
+)
+async def openclaw_command(
+    interaction: discord.Interaction,
+    remote: str = "origin",
+    branch: str = "",
+):
+    """Push OPENCLAW_REPO_PATH to *remote* using SSH / the system credential manager.
+
+    Credentials are sourced entirely from the host environment (SSH keys or
+    the system credential manager).  No PAT is ever requested through chat.
+    """
+    await interaction.response.defer(ephemeral=True)
+    try:
+        output = git_push(OPENCLAW_REPO_PATH, remote, branch or None)
+        msg = f"✅ **Pushed** `{OPENCLAW_REPO_PATH}` → `{remote}`"
+        if branch:
+            msg += f" (branch: `{branch}`)"
+        if output:
+            msg += f"\n```\n{output}\n```"
+        await interaction.followup.send(msg, ephemeral=True)
+    except ValueError as exc:
+        await interaction.followup.send(
+            f"❌ **Invalid input:**\n```\n{exc}\n```",
+            ephemeral=True,
+        )
+    except TimeoutError as exc:
+        await interaction.followup.send(
+            f"⏱️ **Timed out:**\n```\n{exc}\n```",
+            ephemeral=True,
+        )
+    except GitError as exc:
+        await interaction.followup.send(
+            f"❌ **Push failed:**\n```\n{exc}\n```",
+            ephemeral=True,
+        )
+
+
+>>>>>>> origin/main
 def main():
     token = get_discord_token()
     logger.info("Starting Discord bot…")
