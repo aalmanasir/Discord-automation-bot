@@ -13,21 +13,33 @@ invoking user).
 | `/sha256 <text>` | Compute the SHA256 hash of any text |
 | `/sha256_verify <text> <expected_hash>` | Verify that the SHA256 hash of text matches an expected value |
 | `/sha256_file <file> [expected_hash]` | Compute (or verify) the SHA256 hash of an uploaded file |
+| `/openclaw [remote] [branch]` | Push the configured repository using SSH / system credential manager |
 
 ## Architecture
 
 ```
-bot.py              – Discord client setup, slash-command handlers, and entry point
-sha256_helpers.py   – Pure-Python SHA256 utilities (no Discord dependency)
+bot.py                          – Discord client setup, slash-command handlers, and entry point
+git_helpers.py                  – Git push helper for /openclaw (no PAT ever accepted)
+sha256_helpers.py               – Backward-compatible re-export shim (imports from backend.utils)
+backend/
+  config/settings.py            – Environment-variable configuration (get_discord_token)
+  utils/sha256_helpers.py       – Core SHA256 primitives (hashlib + hmac.compare_digest)
+  services/sha256_service.py    – Business-logic service layer (hash_text, verify_text_hash, …)
 tests/
-  test_sha256.py    – unittest tests for sha256_helpers
-requirements.txt    – Runtime dependencies (discord.py, python-dotenv)
-requirements-dev.txt – Dev/test dependencies (pytest)
-.env.example        – Template for the required DISCORD_TOKEN environment variable
+  test_sha256.py                – unittest tests for sha256 utilities
+  test_sha256_service.py        – unittest tests for the service layer
+  test_bot_helpers.py           – unittest tests for bot helper functions
+  test_git_helpers.py           – unittest tests for git_helpers
+requirements.txt                – Runtime dependencies (discord.py, python-dotenv)
+requirements-dev.txt            – Dev/test dependencies (pytest)
+.env.example                    – Template for the required environment variables
+Dockerfile                      – Production container image
+.dockerignore                   – Excludes .env, .git, tests, __pycache__ from image
 ```
 
-Keep Discord-specific logic in `bot.py` and pure hashing logic in `sha256_helpers.py`
-so the helpers remain independently testable without a Discord connection.
+Keep Discord-specific logic in `bot.py`, business logic in `backend/services/`, and
+pure hashing primitives in `backend/utils/sha256_helpers.py` so each layer remains
+independently testable without a Discord connection.
 
 ## Coding conventions
 
@@ -43,8 +55,7 @@ so the helpers remain independently testable without a Discord connection.
 
 ## Testing
 
-Tests live in `tests/test_sha256.py` and use the standard `unittest` module.  Run
-them with:
+Tests live in `tests/` and use the standard `unittest` module.  Run them with:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -52,25 +63,30 @@ python -m pytest tests/ -v
 ```
 
 - Place new tests in `tests/` following the `TestClassName` / `test_method_name`
-  naming convention already used in `test_sha256.py`.
-- Test pure-logic helpers (`sha256_helpers.py`) with plain unit tests; mock the
-  Discord `Interaction` when testing bot command handlers.
+  naming convention already used in the existing test modules.
+- Test pure-logic helpers (`backend/utils/sha256_helpers.py`) with plain unit tests;
+  test service-layer functions in `tests/test_sha256_service.py`; mock the Discord
+  `Interaction` when testing bot command handlers.
 - Every new helper function should have at least one test for a known value, one for
   an edge case (empty input), and one for an error/mismatch case.
 
 ## Adding new commands
 
-1. Add any new pure helper functions to `sha256_helpers.py` with docstrings and
-   corresponding tests in `tests/test_sha256.py`.
-2. Register the slash command in `bot.py` using `@tree.command` and
-   `@app_commands.describe` decorators, following the pattern of the existing
-   commands.
-3. Always `defer` the interaction with `ephemeral=True` for commands that perform
-   I/O (e.g. file reads) before doing any async work.
-4. All user-facing bot messages must be `ephemeral=True`.
+1. Add any new pure helper functions to `backend/utils/sha256_helpers.py` with docstrings
+   and corresponding tests in `tests/test_sha256.py`.
+2. Add business-logic wrappers to `backend/services/sha256_service.py` and test them in
+   `tests/test_sha256_service.py`.
+3. Register the slash command in `bot.py` using `@tree.command` and
+   `@app_commands.describe` decorators, following the pattern of the existing commands.
+4. Always `defer` the interaction with `ephemeral=True` for commands that perform I/O
+   (e.g. file reads) before doing any async work.
+5. Wrap CPU-bound or blocking calls (hashing, git operations) in `asyncio.to_thread`
+   so the event loop stays responsive.
+6. All user-facing bot messages must be `ephemeral=True`.
 
 ## Environment variables
 
 | Variable | Description |
 |---|---|
 | `DISCORD_TOKEN` | Discord bot token (required) — obtain from the [Discord Developer Portal](https://discord.com/developers/applications) |
+| `OPENCLAW_REPO_PATH` | Absolute path to the repository `/openclaw` will push (default: `.`) |

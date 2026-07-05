@@ -12,4 +12,4 @@ if [ ! -f "$REPO_ROOT/.env" ]; then
 fi
 
 cd "$REPO_ROOT"
-python bot.py
+exec python bot.py

@@ -7,10 +7,6 @@ import os
 import discord
 from discord import app_commands
 
-<<<<<<< copilot/add-openclaw-integration
-from git_helpers import GitError, git_push
-from sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
-=======
 from backend.config.settings import get_discord_token
 from backend.services.sha256_service import (
     hash_bytes,
@@ -19,15 +15,14 @@ from backend.services.sha256_service import (
     verify_bytes_hash,
     verify_text_hash,
 )
->>>>>>> main
+from git_helpers import GitError, git_push
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENCLAW_REPO_PATH = os.getenv("OPENCLAW_REPO_PATH", ".")
 
 intents = discord.Intents.default()
@@ -56,7 +51,7 @@ def _format_verify_result(
     Returns:
         A formatted string ready to send as a Discord message.
     """
-    normalized = expected_hash.strip().lower()
+    normalized = normalize_hash(expected_hash)
     if filename:
         if match:
             return f"✅ **Match!** SHA256 of `{filename}` matches the expected hash.\n```\n{digest}\n```"
@@ -106,16 +101,6 @@ async def sha256_verify_command(
         _format_verify_result(digest, expected_hash, match),
         ephemeral=True,
     )
-    if match:
-        await interaction.response.send_message(
-            f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```",
-            ephemeral=True,
-        )
-    else:
-        await interaction.response.send_message(
-            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
-            ephemeral=True,
-        )
 
 
 @tree.command(
@@ -136,24 +121,13 @@ async def sha256_file_command(
     data = await file.read()
 
     if expected_hash:
-        digest, match = verify_bytes_hash(data, expected_hash)
+        # Run the CPU-bound hash in a thread pool so the event loop stays
+        # responsive to other Discord events while large files are processed.
+        digest, match = await asyncio.to_thread(verify_bytes_hash, data, expected_hash)
         await interaction.followup.send(
             _format_verify_result(digest, expected_hash, match, filename=file.filename),
             ephemeral=True,
         )
-        # Run the CPU-bound hash in a thread pool so the event loop stays
-        # responsive to other Discord events while large files are processed.
-        digest, match = await asyncio.to_thread(verify_bytes_hash, data, expected_hash)
-        if match:
-            await interaction.followup.send(
-                f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
-                ephemeral=True,
-            )
-        else:
-            await interaction.followup.send(
-                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
-                ephemeral=True,
-            )
     else:
         # Run the CPU-bound hash in a thread pool so the event loop stays
         # responsive to other Discord events while large files are processed.
@@ -184,7 +158,7 @@ async def openclaw_command(
     """
     await interaction.response.defer(ephemeral=True)
     try:
-        output = git_push(OPENCLAW_REPO_PATH, remote, branch or None)
+        output = await asyncio.to_thread(git_push, OPENCLAW_REPO_PATH, remote, branch or None)
         msg = f"✅ **Pushed** `{OPENCLAW_REPO_PATH}` → `{remote}`"
         if branch:
             msg += f" (branch: `{branch}`)"
