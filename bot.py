@@ -1,53 +1,29 @@
 """Discord automation bot with SHA256 verification commands and OpenClaw git push."""
 
-<<<<<<< HEAD
-import logging
-=======
 import asyncio
 import logging
 import os
->>>>>>> origin/main
 
 import discord
 from discord import app_commands
 
-<<<<<<< HEAD
-=======
-<<<<<<< copilot/add-openclaw-integration
-from git_helpers import GitError, git_push
-from sha256_helpers import compute_sha256_bytes, compute_sha256_text, verify_sha256
-=======
->>>>>>> origin/main
 from backend.config.settings import get_discord_token
 from backend.services.sha256_service import (
     hash_bytes,
     hash_text,
-<<<<<<< HEAD
+    normalize_hash,
     verify_bytes_hash,
     verify_text_hash,
 )
+from git_helpers import GitError, git_push
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
-=======
-    normalize_hash,
-    verify_bytes_hash,
-    verify_text_hash,
-)
->>>>>>> main
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
-logger = logging.getLogger(__name__)
-
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENCLAW_REPO_PATH = os.getenv("OPENCLAW_REPO_PATH", ".")
->>>>>>> origin/main
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -75,7 +51,7 @@ def _format_verify_result(
     Returns:
         A formatted string ready to send as a Discord message.
     """
-    normalized = expected_hash.strip().lower()
+    normalized = normalize_hash(expected_hash)
     if filename:
         if match:
             return f"✅ **Match!** SHA256 of `{filename}` matches the expected hash.\n```\n{digest}\n```"
@@ -90,14 +66,10 @@ def _format_verify_result(
 
 @client.event
 async def on_ready():
-<<<<<<< HEAD
-    await tree.sync()
-=======
     global _synced
     if not _synced:
         await tree.sync()
         _synced = True
->>>>>>> origin/main
     logger.info("Logged in as %s (ID: %s)", client.user, client.user.id)
 
 
@@ -125,23 +97,10 @@ async def sha256_verify_command(
 ):
     """Compare the SHA256 of *text* against *expected_hash*."""
     digest, match = verify_text_hash(text, expected_hash)
-<<<<<<< HEAD
-=======
     await interaction.response.send_message(
         _format_verify_result(digest, expected_hash, match),
         ephemeral=True,
     )
->>>>>>> origin/main
-    if match:
-        await interaction.response.send_message(
-            f"✅ **Match!** The SHA256 hash of your text matches the expected hash.\n```\n{digest}\n```",
-            ephemeral=True,
-        )
-    else:
-        await interaction.response.send_message(
-            f"❌ **Mismatch!**\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
-            ephemeral=True,
-        )
 
 
 @tree.command(
@@ -162,43 +121,23 @@ async def sha256_file_command(
     data = await file.read()
 
     if expected_hash:
-        digest, match = verify_bytes_hash(data, expected_hash)
-<<<<<<< HEAD
-=======
+        # Run the CPU-bound hash in a thread pool so the event loop stays
+        # responsive to other Discord events while large files are processed.
+        digest, match = await asyncio.to_thread(verify_bytes_hash, data, expected_hash)
         await interaction.followup.send(
             _format_verify_result(digest, expected_hash, match, filename=file.filename),
             ephemeral=True,
         )
-        # Run the CPU-bound hash in a thread pool so the event loop stays
-        # responsive to other Discord events while large files are processed.
-        digest, match = await asyncio.to_thread(verify_bytes_hash, data, expected_hash)
->>>>>>> origin/main
-        if match:
-            await interaction.followup.send(
-                f"✅ **Match!** SHA256 of `{file.filename}` matches the expected hash.\n```\n{digest}\n```",
-                ephemeral=True,
-            )
-        else:
-            await interaction.followup.send(
-                f"❌ **Mismatch!** SHA256 of `{file.filename}`:\nComputed: `{digest}`\nExpected: `{normalize_hash(expected_hash)}`",
-                ephemeral=True,
-            )
     else:
-<<<<<<< HEAD
-        digest = hash_bytes(data)
-=======
         # Run the CPU-bound hash in a thread pool so the event loop stays
         # responsive to other Discord events while large files are processed.
         digest = await asyncio.to_thread(hash_bytes, data)
->>>>>>> origin/main
         await interaction.followup.send(
             f"**SHA256** of `{file.filename}`:\n```\n{digest}\n```",
             ephemeral=True,
         )
 
 
-<<<<<<< HEAD
-=======
 @tree.command(
     name="openclaw",
     description="Push the configured repository using SSH / system credential manager",
@@ -243,7 +182,6 @@ async def openclaw_command(
         )
 
 
->>>>>>> origin/main
 def main():
     token = get_discord_token()
     logger.info("Starting Discord bot…")

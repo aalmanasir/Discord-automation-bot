@@ -1,10 +1,6 @@
 # Discord-automation-bot
 
-<<<<<<< HEAD
-=======
 A Discord bot with SHA256 verification commands and the OpenClaw git-push command.
->>>>>>> origin/main
-A production-grade Discord bot with SHA256 verification commands.
 
 ## Features
 
@@ -17,8 +13,6 @@ A production-grade Discord bot with SHA256 verification commands.
 
 All responses are ephemeral (only visible to the invoking user).
 
-<<<<<<< HEAD
-=======
 ## OpenClaw
 
 The `/openclaw` command pushes the local repository configured by the
@@ -37,13 +31,14 @@ The `/openclaw` command pushes the local repository configured by the
 |---|---|---|
 | `remote` | `origin` | Remote name or URL to push to |
 | `branch` | *(current branch)* | Branch ref to push |
->>>>>>> origin/main
+
 ## Project structure
 
 ```
 Discord-automation-bot/
 ├── bot.py                  # Entry-point — starts the Discord client
 ├── sha256_helpers.py       # Backward-compatible re-export shim
+├── git_helpers.py          # Git push helper for /openclaw
 ├── requirements.txt
 ├── requirements-dev.txt
 ├── .env.example

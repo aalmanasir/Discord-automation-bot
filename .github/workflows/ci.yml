@@ -8,36 +8,17 @@ on:
 
 jobs:
   test:
-<<<<<<< HEAD
-=======
+    name: Run tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
->>>>>>> origin/main
-    name: Run tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-<<<<<<< HEAD
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-
-      - name: Run pytest
-=======
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -49,5 +30,4 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run tests
->>>>>>> origin/main
         run: python -m pytest tests/ -v
