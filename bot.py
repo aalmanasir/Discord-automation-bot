@@ -158,7 +158,7 @@ async def openclaw_command(
     """
     await interaction.response.defer(ephemeral=True)
     try:
-        output = git_push(OPENCLAW_REPO_PATH, remote, branch or None)
+        output = await asyncio.to_thread(git_push, OPENCLAW_REPO_PATH, remote, branch or None)
         msg = f"✅ **Pushed** `{OPENCLAW_REPO_PATH}` → `{remote}`"
         if branch:
             msg += f" (branch: `{branch}`)"
