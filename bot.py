@@ -16,6 +16,7 @@ from backend.services.sha256_service import (
     verify_text_hash,
 )
 from git_helpers import GitError, git_push
+from backend.config.openclaw import openclaw_allowed
 
 logging.basicConfig(
     level=logging.INFO,
@@ -143,7 +144,7 @@ async def sha256_file_command(
     description="Push the configured repository using SSH / system credential manager",
 )
 @app_commands.describe(
-    remote="Remote name or URL to push to (default: origin)",
+    remote="Configured remote name (default: origin)",
     branch="Branch to push (default: current branch)",
 )
 async def openclaw_command(
@@ -156,28 +157,19 @@ async def openclaw_command(
     Credentials are sourced entirely from the host environment (SSH keys or
     the system credential manager).  No PAT is ever requested through chat.
     """
+    if not openclaw_allowed(interaction.user.id, remote):
+        await interaction.response.send_message(
+            "This operation is not enabled for this user and remote.", ephemeral=True
+        )
+        return
     await interaction.response.defer(ephemeral=True)
     try:
-        output = await asyncio.to_thread(git_push, OPENCLAW_REPO_PATH, remote, branch or None)
-        msg = f"✅ **Pushed** `{OPENCLAW_REPO_PATH}` → `{remote}`"
-        if branch:
-            msg += f" (branch: `{branch}`)"
-        if output:
-            msg += f"\n```\n{output}\n```"
-        await interaction.followup.send(msg, ephemeral=True)
-    except ValueError as exc:
+        await asyncio.to_thread(git_push, OPENCLAW_REPO_PATH, remote, branch or None)
+        await interaction.followup.send("Repository push completed.", ephemeral=True)
+    except (ValueError, TimeoutError, GitError, OSError):
+        logger.warning("OpenClaw push failed; raw Git output withheld from Discord")
         await interaction.followup.send(
-            f"❌ **Invalid input:**\n```\n{exc}\n```",
-            ephemeral=True,
-        )
-    except TimeoutError as exc:
-        await interaction.followup.send(
-            f"⏱️ **Timed out:**\n```\n{exc}\n```",
-            ephemeral=True,
-        )
-    except GitError as exc:
-        await interaction.followup.send(
-            f"❌ **Push failed:**\n```\n{exc}\n```",
+            "Repository push failed. Ask the operator to check the host configuration.",
             ephemeral=True,
         )
 

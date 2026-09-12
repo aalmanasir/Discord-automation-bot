@@ -1,0 +1,23 @@
+name: Container validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Build and smoke-test production container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - name: Build runtime image
+        run: docker build -t discord-bot:test .
+      - name: Verify runtime without connecting to Discord
+        run: |
+          docker run --rm discord-bot:test python -c 'import os, shutil, bot; assert os.getuid() != 0; assert shutil.which("git"); assert shutil.which("ssh"); assert not os.path.exists("/app/.env")'
+          docker run --rm discord-bot:test python -m pip check

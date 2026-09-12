@@ -28,7 +28,7 @@ class TestGitPushSuccess(unittest.TestCase):
         mock_run.return_value = _make_completed_process(0, stdout="Everything up-to-date")
         result = git_push("/some/repo")
         mock_run.assert_called_once_with(
-            ["git", "-C", "/some/repo", "push", "origin"],
+            ["git", "-C", "/some/repo", "push", "--", "origin"],
             capture_output=True,
             text=True,
             timeout=60,
@@ -57,7 +57,7 @@ class TestGitPushSuccess(unittest.TestCase):
         git_push("/repo", branch=None)
         cmd = mock_run.call_args[0][0]
         # Should end after the remote name — no extra branch argument
-        self.assertEqual(cmd, ["git", "-C", "/repo", "push", "origin"])
+        self.assertEqual(cmd, ["git", "-C", "/repo", "push", "--", "origin"])
 
     @patch("git_helpers.subprocess.run")
     def test_stdout_and_stderr_combined(self, mock_run):
@@ -138,6 +138,16 @@ class TestGitPushValidation(unittest.TestCase):
         with patch("git_helpers.subprocess.run") as mock_run:
             mock_run.return_value = _make_completed_process(0)
             git_push("/repo", remote="git@github.com:user/repo.git")
+
+    @patch("git_helpers.subprocess.run")
+    def test_option_values_rejected_before_git_runs(self, mock_run):
+        for value in ("--all", "--mirror", "--force", "origin\n"):
+            with self.subTest(remote=value), self.assertRaises(ValueError):
+                git_push("/repo", remote=value)
+        for value in ("--all", "--force", "main\n"):
+            with self.subTest(branch=value), self.assertRaises(ValueError):
+                git_push("/repo", branch=value)
+        mock_run.assert_not_called()
 
     def test_invalid_remote_raises_value_error(self):
         with self.assertRaises(ValueError):
