@@ -1,6 +1,6 @@
 ## Summary
 
-- 
+- Describe the change in 1–2 sentences
 
 ## Validation
 
