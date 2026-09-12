@@ -18,4 +18,4 @@
 
 Describe how to revert safely if this change causes problems:
 
-- 
+- Steps to revert (e.g., revert commit(s), disable feature, restore prior config)
