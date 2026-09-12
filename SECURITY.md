@@ -13,7 +13,7 @@ This repository contains a Discord bot and supporting SHA256 verification utilit
 
 Do not open a public issue for a suspected vulnerability.
 
-Use GitHub's private vulnerability reporting or contact the repository owner through a trusted private channel. Include:
+Use GitHub's private vulnerability reporting by opening https://github.com/aalmanasir/Discord-automation-bot/security/advisories/new and selecting **Report a vulnerability**. Include:
 
 - affected file or feature
 - reproduction steps
