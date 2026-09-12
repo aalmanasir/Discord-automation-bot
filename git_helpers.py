@@ -31,7 +31,7 @@ class GitError(Exception):
 
 def _validate_remote(remote: str) -> None:
     """Raise ``ValueError`` if *remote* is not a safe remote name or URL."""
-    if not (_REMOTE_NAME_RE.match(remote) or _REMOTE_URL_RE.match(remote)):
+    if remote.startswith("-") or not (_REMOTE_NAME_RE.fullmatch(remote) or _REMOTE_URL_RE.fullmatch(remote)):
         raise ValueError(
             f"Invalid remote '{remote}': must be a plain remote name or a "
             "git/ssh/https URL."
@@ -40,7 +40,7 @@ def _validate_remote(remote: str) -> None:
 
 def _validate_branch(branch: str) -> None:
     """Raise ``ValueError`` if *branch* is not a safe git ref name."""
-    if not _BRANCH_RE.match(branch):
+    if branch.startswith("-") or not _BRANCH_RE.fullmatch(branch):
         raise ValueError(
             f"Invalid branch '{branch}': must contain only alphanumeric "
             "characters, hyphens, underscores, dots, or forward slashes."
@@ -74,7 +74,7 @@ def git_push(
     if branch:
         _validate_branch(branch)
 
-    cmd = ["git", "-C", repo_path, "push", remote]
+    cmd = ["git", "-C", repo_path, "push", "--", remote]
     if branch:
         cmd.append(branch)
 

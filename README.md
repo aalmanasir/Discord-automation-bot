@@ -13,6 +13,8 @@ A Discord bot with SHA256 verification commands and the OpenClaw git-push comman
 
 All responses are ephemeral (only visible to the invoking user).
 
+`/openclaw` is disabled by default. Set `OPENCLAW_ALLOWED_USER_IDS` to the explicit Discord user IDs allowed to push, and configure `OPENCLAW_REMOTE` on the host. Raw Git output and host paths are not returned to Discord.
+
 ## OpenClaw
 
 The `/openclaw` command pushes the local repository configured by the
@@ -29,7 +31,7 @@ The `/openclaw` command pushes the local repository configured by the
 
 | Parameter | Default | Description |
 |---|---|---|
-| `remote` | `origin` | Remote name or URL to push to |
+| `remote` | `origin` | Must match the operator-configured `OPENCLAW_REMOTE` name |
 | `branch` | *(current branch)* | Branch ref to push |
 
 ## Project structure
@@ -115,3 +117,9 @@ python -m pytest tests/ -v
 |---|---|
 | `DISCORD_TOKEN` | Your Discord bot token (required) |
 | `OPENCLAW_REPO_PATH` | Absolute path to the repository `/openclaw` will push (default: `.`) |
+
+## Production configuration
+
+The container runs as UID 10001 and includes Git and the SSH client. Supply DISCORD_TOKEN through the host secret store or an external env file; never bake it into the image. Hashing commands work without Git credentials. For optional OpenClaw use, mount only the intended repository, set OPENCLAW_REPO_PATH and the operator allowlist, and make its existing Git/SSH configuration accessible to UID 10001. Set trusted SSH host keys explicitly; do not disable host-key checking or mount the entire host home directory.
+
+No production host is assumed by this repository. Deployment requires an owner-selected host and an existing bot token configured there. The CI container smoke test checks imports and dependencies without connecting to Discord.
