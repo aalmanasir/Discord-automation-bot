@@ -1,0 +1,10 @@
+# Default owner for all repository changes
+* @aalmanasir
+
+# GitHub automation and CI configuration
+.github/ @aalmanasir
+
+# Runtime and security-sensitive entry points
+bot.py @aalmanasir
+backend/ @aalmanasir
+scripts/ @aalmanasir
